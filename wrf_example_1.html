@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Elevation with GeoTIFF and Leaflet</title>
+    <title>WRF Viewer #1</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+
     <style>
       #map {
         bottom: 0;
@@ -25,96 +31,43 @@
         z-index: 1000;
         background-color: lightcoral;
       }
-      #pixel-value {
-        position: absolute;
-        top: 160px;
-        left: 100px;
-        z-index: 1000;
-        background-color: lightyellow;
-        padding: 5px;
-      }
-      #date-picker-container {
-        position: absolute;
-        top: 40px;
-        left: 120px;
-        z-index: 1000;
-      }
-      #band-selector-container {
-        position: absolute;
-        top: 70px;
-        left: 120px;
-        z-index: 1000;
-      }
     </style>
   </head>
 
   <body>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
     <script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/rainbowvis.js@1.1.1/rainbowvis.js"></script>
 
-    <div id="map"></div>
+    <div id="map"></div> 
     <div id="button-container">
       <button id="decrementButton">- 1 hour</button>
       <button id="incrementButton">+ 1 hour</button>
     </div>
-    <div id="date-picker-container">
-      <input type="date" id="datePicker" value="2024-09-15" min="2024-09-01" max="2024-09-31"/>
-    </div>
-    <div id="band-selector-container">
-      <select id="bandSelector">
-        <option value="Band1">Wind Direction</option>
-        <option value="Band2" selected>Wind Speed</option>
-        <option value="Band3">Air Pressure</option>
-        <option value="Band4">Rainfall</option>
-        <!-- <option value="Band5">Relative Humidity</option> -->
-        <option value="Band6">Snowfall</option>
-        <option value="Band7">Snow level</option>
-        <option value="Band8">Temperature</option>
-      </select>
-    </div>
     <div id="label-container">
-      <label id="dateLabel">2024-09-15T12:00:00.000Z</label>
+      <label id="dateLabel">2024-09-01T12:00:00.000Z</label>      
     </div>
-    <div id="pixel-value">Pixel Value: <span id="pixelValueLabel">N/A</span></div>
 
     <script>
       let map = L.map("map");
 
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      }).addTo(map);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {attribution:'&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
 
       let wcsUrl = "https://tec.citius.usc.es/ccmm/geoserver/ows";
       let wcsParams = {
         service: "WCS",
         version: "2.0.1",
         request: "GetCoverage",
-        coverageId: "ccmm:modelo_wrf_meteogalicia_20240501",
-        rangesubset: "Band8"
+        coverageId: "ccmm:modelo_wrf_meteogalicia_20240901",
       };
 
-      let fecha = new Date("2024-09-15T12:00:00.000Z");
-
-      function updateCoverageId() {
-        const year = fecha.getFullYear();
-        const month = ("0" + (fecha.getMonth() + 1)).slice(-2);
-        const day = ("0" + fecha.getDate()).slice(-2);
-        wcsParams.coverageId = `ccmm:modelo_wrf_meteogalicia_${year}${month}${day}`;
-      }
-
-      function updateRangeSubset() {
-        const band = document.getElementById("bandSelector").value;
-        wcsParams.rangesubset = band;
-      }
-
+      let fecha = new Date("2024-09-01T12:00:00.000Z");
+      
       function updateMap() {
-        updateCoverageId();
-        updateRangeSubset();
         var urlParams = new URLSearchParams(wcsParams).toString();
-        var fullUrl = `${wcsUrl}?${urlParams}&subset=time("${fecha.toISOString()}")`;
+        var fullUrl = `${wcsUrl}?${urlParams}&subset=time("${fecha.toISOString()}")&rangesubset=Band8`;
 
         fetch(fullUrl)
           .then((res) => res.arrayBuffer())
@@ -131,72 +84,70 @@
 
               layer = new GeoRasterLayer({
                 georaster: georaster,
-                opacity: 0.7,
-                pixelValuesToColorFn: values => {
-                  const pixelValue = values[0];
-                  if (pixelValue === 0) return null;
-                  const color = rainbow.colourAt(pixelValue);
-                  return `#${color}`;
-                },
-                resolution: 512, 
-              }).addTo(map);
+                opacity: 0.7,              
+                pixelValuesToColorFn: values => values[0] === 0 ? null :
+                              (values[0] > 260 && values[0] <= 261) ? '#ffc0cb' :
+                              (values[0] > 261 && values[0] <= 262) ? '#ffb6c1' :
+                              (values[0] > 262 && values[0] <= 263) ? '#ff69b4' :
+                              (values[0] > 263 && values[0] <= 264) ? '#ff1493' :
+                              (values[0] > 264 && values[0] <= 265) ? '#db7093' :
+                              (values[0] > 265 && values[0] <= 266) ? '#c71585' :
+                              (values[0] > 266 && values[0] <= 267) ? '#d8bfd8' :
+                              (values[0] > 267 && values[0] <= 268) ? '#dda0dd' :
+                              (values[0] > 268 && values[0] <= 269) ? '#ee82ee' :
+                              (values[0] > 269 && values[0] <= 270) ? '#da70d6' :
+                              (values[0] > 270 && values[0] <= 271) ? '#ff00ff' :
+                              (values[0] > 271 && values[0] <= 272) ? '#ba55d3' :
+                              (values[0] > 272 && values[0] <= 273) ? '#9932cc' :
+                              (values[0] > 273 && values[0] <= 274) ? '#eb3434' :
+                              (values[0] > 274 && values[0] <= 275) ? '#eb9e34' :
+                              (values[0] > 275 && values[0] <= 276) ? '#dbeb34' :
+                              (values[0] > 276 && values[0] <= 277) ? '#61eb34' :
+                              (values[0] > 277 && values[0] <= 278) ? '#34eba1' :
+                              (values[0] > 278 && values[0] <= 279) ? '#34baeb' :
+                              (values[0] > 279 && values[0] <= 280) ? '#3455eb' :
+                              (values[0] > 280 && values[0] <= 281) ? '#a134eb' :
+                              (values[0] > 281 && values[0] <= 282) ? '#eb34d2' :
+                              (values[0] > 282 && values[0] <= 283) ? '#eb3475' :
+                              (values[0] > 283 && values[0] <= 284) ? '#eb5934' :
+                              (values[0] > 284 && values[0] <= 285) ? '#eb8d34' :
+                              (values[0] > 285 && values[0] <= 286) ? '#d2eb34' :
+                              (values[0] > 286 && values[0] <= 287) ? '#8deb34' :
+                              (values[0] > 287 && values[0] <= 288) ? '#34eb71' :
+                              (values[0] > 288 && values[0] <= 289) ? '#34ebb0' :
+                              (values[0] > 289 && values[0] <= 290) ? '#34cdeb' :
+                              (values[0] > 290 && values[0] <= 291) ? '#348feb' :
+                              (values[0] > 291 && values[0] <= 292) ? '#6e34eb' :
+                              (values[0] > 292 && values[0] <= 293) ? '#b534eb' :
+                              (values[0] > 293 && values[0] <= 294) ? '#eb34c4' :
+                              (values[0] > 294 && values[0] <= 295) ? '#eb347f' :
+                              (values[0] > 295 && values[0] <= 296) ? '#eb3445' :
+                              (values[0] > 296 && values[0] <= 297) ? '#eb7034' :
+                              (values[0] > 297 && values[0] <= 298) ? '#e2eb34' :
+                              (values[0] > 298 && values[0] <= 299) ? '#aceb34' :
+                              (values[0] > 299 && values[0] <= 300) ? '#55eb34' :
+                              (values[0] > 300 && values[0] <= 301) ? '#34eb91' :
+                              (values[0] > 301 && values[0] <= 302) ? '#34daeb' :
+                              (values[0] > 302 && values[0] <= 303) ? '#347aeb' :
+                              '#000000',                  
+                resolution: 512, // optional parameter for adjusting display resolution
+              }).addTo(map);            
               map.fitBounds(layer.getBounds());
-
-              map.on("mousemove", function (e) {
-                const latlng = e.latlng;
-                const x = Math.floor((latlng.lng - georaster.xmin) / georaster.pixelWidth);
-                const y = Math.floor((georaster.ymax - latlng.lat) / georaster.pixelHeight);
-                
-                if (x >= 0 && x < georaster.width && y >= 0 && y < georaster.height) {
-                  const pixelValue = georaster.values[0][y][x].toFixed(2);
-
-                  if (pixelValue >= 0) 
-                    document.getElementById("pixelValueLabel").innerText = pixelValue !== undefined ? pixelValue : "N/A";
-                } else {
-                  document.getElementById("pixelValueLabel").innerText = "N/A";
-                }
-              });
             });
           });
       }
 
-      document
-        .getElementById("decrementButton")
-        .addEventListener("click", () => {
-          fecha.setHours(fecha.getHours() - 1);
-          updateMap();
-          document.getElementById("dateLabel").innerText = fecha.toISOString();
-        });
+      document.getElementById('decrementButton').addEventListener('click', () => {
+        fecha.setHours(fecha.getHours() - 1);
+        updateMap();
+        document.getElementById('dateLabel').innerText = fecha.toISOString();
+      });
 
-      document
-        .getElementById("incrementButton")
-        .addEventListener("click", () => {
-          fecha.setHours(fecha.getHours() + 1);
-          updateMap();
-          document.getElementById("dateLabel").innerText = fecha.toISOString();
-        });
-
-      document
-        .getElementById("datePicker")
-        .addEventListener("change", (event) => {
-          const selectedDate = new Date(event.target.value);
-          fecha.setFullYear(selectedDate.getFullYear());
-          fecha.setMonth(selectedDate.getMonth());
-          fecha.setDate(selectedDate.getDate());
-          fecha.setHours(14); // Reset hour to noon
-          fecha.setMinutes(0);
-          fecha.setSeconds(0);
-          fecha.setMilliseconds(0);
-          updateMap();
-          document.getElementById("dateLabel").innerText = fecha.toISOString();
-        });
-
-      document
-        .getElementById("bandSelector")
-        .addEventListener("change", () => {
-          updateMap();
-        });
-
+      document.getElementById('incrementButton').addEventListener('click', () => {
+        fecha.setHours(fecha.getHours() + 1);
+        updateMap();
+        document.getElementById('dateLabel').innerText = fecha.toISOString();
+      });
       let layer;
       updateMap();
     </script>
