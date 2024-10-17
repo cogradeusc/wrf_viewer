@@ -60,7 +60,7 @@
       <button id="incrementButton">+ 1 hour</button>
     </div>
     <div id="date-picker-container">
-      <input type="date" id="datePicker" value="2024-09-15" min="2024-05-01" max="2024-05-31"/>
+      <input type="date" id="datePicker" value="2024-09-15" min="2024-09-01" max="2024-09-31"/>
     </div>
     <div id="band-selector-container">
       <select id="bandSelector">
@@ -75,7 +75,7 @@
       </select>
     </div>
     <div id="label-container">
-      <label id="dateLabel">2024-05-15T12:00:00.000Z</label>
+      <label id="dateLabel">2024-09-15T12:00:00.000Z</label>
     </div>
     <div id="pixel-value">Pixel Value: <span id="pixelValueLabel">N/A</span></div>
 
@@ -96,7 +96,7 @@
         rangesubset: "Band8"
       };
 
-      let fecha = new Date("2024-05-15T12:00:00.000Z");
+      let fecha = new Date("2024-09-15T12:00:00.000Z");
 
       function updateCoverageId() {
         const year = fecha.getFullYear();
