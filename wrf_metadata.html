@@ -25,14 +25,14 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center mb-4">Predicción Diaria WRF</h1>
-        <div class="table-responsive">
-           
+        <h1 class="text-center mb-4">Predicción Diaria WRF</h1>        
+        <div class="table-responsive">           
             <table id="prediccionTable" class="table table-bordered table-striped">
                 <thead class="table-dark">
                     <tr>
                         <th>Inicio</th>
                         <th>Fin</th>
+                        <th>Server</th>
                         <th>Cobertura</th>
                     </tr>
                 </thead>
@@ -47,7 +47,6 @@
         document.addEventListener('DOMContentLoaded', function () {
             const apiUrl = 'https://tec.citius.usc.es/ccmm/geoserver/ccmm/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=ccmm%3Aprediccion_diaria_wrf_wfs&outputFormat=application%2Fjson';
 
-            // Fetch data from the API
             fetch(apiUrl)
                 .then(response => response.json())
                 .then(data => {
@@ -55,23 +54,21 @@
                     const tableBody = document.querySelector('#prediccionTable tbody');
                     tableBody.innerHTML = '';
 
-                    // Insert data into the table
                     features.forEach(feature => {
                         const row = `<tr>
                             <td>${feature.properties.phenomenon_time_start}</td>
                             <td>${feature.properties.phenomenon_time_end || 'N/A'}</td>
+                            <td>${feature.properties.subsamples_server}</td>
                             <td>${feature.properties.subsamples_coverage}</td>
                         </tr>`;
                         tableBody.insertAdjacentHTML('beforeend', row);
                     });
 
-                    // Initialize DataTable with sorting and searching features
                     const table = $('#prediccionTable').DataTable({
                         ordering: true,
                         paging: false
                     });
 
-                    // Implement search functionality
                     $('#search').on('keyup', function () {
                         table.search(this.value).draw();
                     });
